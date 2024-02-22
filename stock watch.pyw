@@ -6,7 +6,7 @@ from datetime import datetime,time
 from apscheduler.schedulers.background import BackgroundScheduler
 import tkfilebrowser
 import os
-stock_data = {'COALINDIA.BO': 'Coal India', 'HUDCO.BO': 'HUDCO', 'ONGC.BO': 'ONGC', 'ADANIGREEN.BO': 'Adani Green', 'VEDL.BO': 'Vedanta'}
+stock_data = {'HDFCBANK.BO':'HDFC Bank','COALINDIA.BO': 'Coal India', 'HUDCO.BO': 'HUDCO', 'ONGC.BO': 'ONGC', 'ADANIGREEN.BO': 'Adani Green', 'VEDL.BO': 'Vedanta', 'PAYTM.BO': 'Paytm', 'TITAN.BO': 'Titan', 'GAIL.BO': 'GAIL'}
 scheduler=None
 def check_market():
     global scheduler,scheduler_running
@@ -58,21 +58,32 @@ def get_stock_prices():
     if scheduler_running==True:
         scheduler.add_job(check_open,'interval', seconds=1, max_instances=150)
     for i, (symbol, name) in enumerate(stock_data.items()):
-        stock_info = get_stock_data(symbol)
-        if stock_info.empty or len(stock_info) < 2:
-            continue
-        current_price = (stock_info['Close'].iloc[-1])//0.01/100
-        previous_close = stock_info['Close'].iloc[-2]
-        stock_label = ctk.CTkLabel(stock_frame,height=30,width=200,anchor="w",font=("Arial", 15, "bold"),text=f"{name}", fg_color="gray14")
-        stock_label.grid(row=i, column=0, sticky='w')
-        gap=(current_price-previous_close)//0.01/100
-        gap_per=gap/current_price*100//0.01/100
-        gap_label =  ctk.CTkLabel(stock_frame,height=30,width=100,anchor="e",font=("Arial", 15, "bold"),text=f"{gap}({gap_per}%)", fg_color="gray14")
-        gap_label.grid(row=i, column=1, sticky='e')
-        gap_labels.append(gap_label)
-        price_label = ctk.CTkLabel(stock_frame, text=f"{current_price}",width=80,font=("Arial", 20, "bold"),text_color="green" if current_price > previous_close else "red",fg_color="gray14",bg_color="gray14")
-        price_label.grid(row=i, column=2, sticky='e')
-        price_labels.append(price_label)
+        while True:
+            try:
+                stock_info = get_stock_data(symbol)
+                if stock_info.empty or len(stock_info) < 2:
+                    break  # Break the inner loop if no data is found
+                current_price = (stock_info['Close'].iloc[-1]) // 0.01 / 100
+                previous_close = stock_info['Close'].iloc[-2]
+                stock_label = ctk.CTkLabel(stock_frame, height=30, width=200, anchor="w", font=("Arial", 15, "bold"),
+                                            text=f"{name}", fg_color="gray14")
+                stock_label.grid(row=i, column=0, sticky='w')
+                gap = (current_price - previous_close) // 0.01 / 100
+                gap_per = gap / current_price * 100 // 0.01 / 100
+                gap_label = ctk.CTkLabel(stock_frame, height=30, width=100, anchor="e", font=("Arial", 15, "bold"),
+                                            text=f"{gap}({gap_per}%)", fg_color="gray14")
+                gap_label.grid(row=i, column=1, sticky='e')
+                gap_labels.append(gap_label)
+                price_label = ctk.CTkLabel(stock_frame, text=f"{current_price}", width=80,
+                                            font=("Arial", 20, "bold"),
+                                            text_color="green" if current_price > previous_close else "red",
+                                            fg_color="gray14", bg_color="gray14")
+                price_label.grid(row=i, column=2, sticky='e')
+                price_labels.append(price_label)
+                break 
+            except Exception as e:
+                time.sleep(5) 
+                continue
 def update_stock_prices():
     global price_labels,scheduler,count,scheduler_running,gap_labels
     for i, (symbol, name) in enumerate(stock_data.items()):
@@ -87,6 +98,7 @@ def update_stock_prices():
         price_label = price_labels[i]
         gap_label.configure(text=f"{gap}({gap_per}%)")
         price_label.configure(text=f"{current_price}", text_color="green" if current_price > previous_close else "red")
+        print(current_price)
     if time(15,30)<datetime.now().time():
         scheduler.shutdown(wait=False)
         scheduler=None
@@ -124,7 +136,7 @@ def select_file_location():
 read_file_location()
 stock_window = ctk.CTk()
 stock_window.title("Mood")
-stock_window.geometry("400x200+1500+500")
+stock_window.geometry("420x340+1490+500")
 stock_window.overrideredirect(True)
 close_icon = ctk.CTkImage(Image.open(mfl + "close.png"), size=(13, 13))
 close_button = ctk.CTkButton(stock_window, image=close_icon, command=close_window, fg_color="gray14", text="", width=1)
